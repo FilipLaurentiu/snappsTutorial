@@ -14,16 +14,17 @@ import {
   shutdown,
   Poseidon,
   Signature,
+  UInt32,
 } from 'snarkyjs';
 
 export class Guess extends SmartContract {
   @state(Field) hashOfGuess = State<Field>();
   @state(PublicKey) ownerAddr = State<PublicKey>();
 
-  deploy(initialbalance: UInt64, ownerAddr: PublicKey) {
+  deploy(initialBalance: UInt64, ownerAddr: PublicKey) {
     super.deploy();
     this.ownerAddr.set(ownerAddr);
-    this.balance.addInPlace(initialbalance);
+    this.balance.addInPlace(initialBalance);
   }
 
   @method async startRound(x: Field, signature: Signature, guess: number) {
@@ -36,6 +37,13 @@ export class Guess extends SmartContract {
     let userHash = Poseidon.hash([Field(guess)]);
     let stateHash = await this.hashOfGuess.get();
     stateHash.assertEquals(userHash);
+  }
+
+  @method async guessMultiplied(guess: number, result: number) {
+    await this.submitGuess(guess);
+
+    Field(guess).mul(3).equals(result).assertEquals(true);
+    this.balance.subInPlace(new UInt32(Field(100)));
   }
 }
 
